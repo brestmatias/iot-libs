@@ -1,0 +1,35 @@
+# Server configurations
+server:
+ port: 8080
+ ginMode: "release"
+ verbose: false
+
+database:
+ uri: "mongodb://localhost:27017"
+ db: "home"
+
+station-rest-client:
+ baseURL:        "http://"
+ connectTimeout: 90
+ timeout:       100
+ disableCache:   true
+ disableTimeout: false
+
+slow-station-rest-client:
+ baseURL:        "http://"
+ connectTimeout: 100
+ timeout:       100
+ disableCache:   true
+ disableTimeout: false
+
+mqtt:
+  minInterval: 30s
+  stationCommandTopic: "command/%s"
+  pingTimeOut: 2s
+  keepAlive: 120s
+  userName: dispatcher
+  clientId: iot-dispatcher-prod
+
+  cron:
+    #desabilitado revisar comentario en cron.go, se me recargaba antes que ejecute alguna tarea
+    reloadTaskSpec: "@every 0h10m5s"
