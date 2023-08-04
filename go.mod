@@ -1,4 +1,4 @@
-module github.com/brestmatias/iot-libs/v4
+module github.com/brestmatias/iot-libs
 
 go 1.19
 
