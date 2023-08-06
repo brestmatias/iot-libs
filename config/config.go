@@ -4,6 +4,8 @@ import (
 	"log"
 	"os"
 
+	"path/filepath"
+
 	"gopkg.in/yaml.v2"
 )
 
@@ -50,9 +52,12 @@ func GetConfigs() *ConfigFile {
 		env = "dev"
 	}
 	filename := "config." + env + ".yml"
-	f, err := os.Open(filename)
+	configPath := os.Getenv("CONFIGPATH")
+	p := filepath.Join(configPath, filename)
+
+	f, err := os.Open(p)
 	if err != nil {
-		log.Println("Error abriendo archivo de configuracion, " + filename + " - " + err.Error())
+		log.Println("Error abriendo archivo de configuracion, " + p + " - " + err.Error())
 	}
 	defer f.Close()
 
