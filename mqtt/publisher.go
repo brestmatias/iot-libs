@@ -1,0 +1,144 @@
+package mqtt
+
+import (
+	"crypto/sha256"
+	"encoding/json"
+	"fmt"
+
+	"github.com/brestmatias/iot-libs/config"
+	"github.com/brestmatias/iot-libs/repository"
+	"github.com/brestmatias/iot-libs/service"
+
+	"log"
+	"time"
+
+	MQTT "github.com/eclipse/paho.mqtt.golang"
+)
+
+type MqttPublisher struct {
+	BrokerIp                      string
+	Client                        MQTT.Client
+	HubConfigService              *service.HubConfigService
+	SentCommands                  []CommandHash
+	InterfaceLastStatusRepository *repository.InterfaceLastStatusRepository
+	Config                        *config.ConfigFile
+}
+
+type CommandHash struct {
+	Topic    string
+	LastHash string
+	LastSent time.Time
+}
+
+func NewMqttPublisher(hubConfigService *service.HubConfigService, configs *config.ConfigFile, interfaceLastStatusRepository *repository.InterfaceLastStatusRepository) *MqttPublisher {
+	method := "NewMqttService"
+	log.Printf("[method:%v]🏗️ 🏗️ Building", method)
+	service := MqttPublisher{
+		HubConfigService:              hubConfigService,
+		InterfaceLastStatusRepository: interfaceLastStatusRepository,
+		Config:                        configs,
+	}
+	service.buildClient()
+	return &service
+}
+
+func (m *MqttPublisher) buildClient() {
+	//method := "buildClient"
+
+	brokerIp := m.HubConfigService.GetBrokerAddress()
+	o := MQTT.NewClientOptions()
+	o.AddBroker(fmt.Sprintf("tcp://%v:1883", brokerIp))
+	o.SetClientID(m.Config.Mqtt.ClientId)
+	o.SetUsername(m.Config.Mqtt.UserName)
+	if m.Config.Mqtt.PingTimeOut != "" {
+		x, _ := time.ParseDuration(m.Config.Mqtt.PingTimeOut)
+		o.SetPingTimeout(x)
+	}
+	if m.Config.Mqtt.KeepAlive != "" {
+		k, _ := time.ParseDuration(m.Config.Mqtt.KeepAlive)
+		o.SetKeepAlive(k)
+	}
+
+	m.Client = MQTT.NewClient(o)
+	if token := m.Client.Connect(); token.Wait() && token.Error() != nil {
+		panic(token.Error())
+	}
+}
+
+/*
+Envio de comando manteniendo espacio definido por configuración
+Evita inundar la cola del tópico con envío recurrente del mismo mensaje
+Si el mensaje a enviar es igual al anterior, deberá cumplirse el intervalo de espacio definido
+*/
+func (m *MqttPublisher) SpacedPublishCommand(topic string, message interface{}) bool {
+	method := "SpacedPublishCommand"
+
+	if m.shouldSend(topic, message) == false {
+		return false
+	}
+
+	messageJSON, _ := json.Marshal(message)
+	token := m.Client.Publish(topic, 0, false, messageJSON)
+	log.Printf("[method:%v][topic:%v] Command Published", method, topic)
+	token.Wait()
+
+	return true
+}
+
+func (m *MqttPublisher) shouldSend(topic string, message interface{}) bool {
+	h := sha256.New()
+	h.Write([]byte(fmt.Sprintf("%v", message)))
+	hash := fmt.Sprintf("%x", h.Sum(nil))
+	minInterval, _ := time.ParseDuration(m.Config.Mqtt.MinInterval)
+	if len(m.SentCommands) == 0 {
+		m.SentCommands = append(m.SentCommands, CommandHash{
+			Topic:    topic,
+			LastHash: hash,
+			LastSent: time.Now(),
+		})
+		return true
+	}
+
+	for i, command := range m.SentCommands {
+		if command.Topic == topic {
+			if command.LastHash == hash {
+				if diff := time.Now().Sub(command.LastSent); diff >= minInterval {
+					(&m.SentCommands[i]).LastSent = time.Now()
+					return true
+				} else {
+					return false
+				}
+			} else {
+				(&m.SentCommands[i]).LastHash = hash
+				(&m.SentCommands[i]).LastSent = time.Now()
+				return true
+			}
+		}
+	}
+	m.SentCommands = append(m.SentCommands, CommandHash{
+		Topic:    topic,
+		LastHash: hash,
+		LastSent: time.Now(),
+	})
+	return true
+}
+
+func (m *MqttPublisher) PublishCommand(topic string, message interface{}) bool {
+	method := "PublishCommand"
+
+	messageJSON, _ := json.Marshal(message)
+	/*if token := m.Client.Connect(); token.Wait() && token.Error() != nil {
+		log.Printf("[method:%v] %v", method, token.Error().Error())
+		return false
+	}*/
+	token := m.Client.Publish(topic, 0, false, messageJSON)
+	log.Printf("[method:%v][topic:%v] Command Published", method, topic)
+	token.Wait()
+
+	// TODO !!!! OJO con esto que sigue, porque se desconectaba el cliente y se desuscribía
+	// revisar si es necesario recheckear la conexión cada x tiempo......
+	// sobre todo por las suscripciones
+	//m.Client.Disconnect(250) <-- no descomentar, solo lo dejo para acordarme de investigar
+
+	return true
+}
