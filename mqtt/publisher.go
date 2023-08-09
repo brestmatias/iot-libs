@@ -7,20 +7,15 @@ import (
 
 	"github.com/brestmatias/iot-libs/config"
 	"github.com/brestmatias/iot-libs/repository"
-	"github.com/brestmatias/iot-libs/service"
 
 	"log"
 	"time"
-
-	MQTT "github.com/eclipse/paho.mqtt.golang"
 )
 
 type MqttPublisher struct {
-	BrokerIp                      string
-	Client                        MQTT.Client
-	HubConfigService              *service.HubConfigService
 	SentCommands                  []CommandHash
 	InterfaceLastStatusRepository *repository.InterfaceLastStatusRepository
+	MqttClient                    *MqttClient
 	Config                        *config.ConfigFile
 }
 
@@ -30,39 +25,12 @@ type CommandHash struct {
 	LastSent time.Time
 }
 
-func NewMqttPublisher(hubConfigService *service.HubConfigService, configs *config.ConfigFile, interfaceLastStatusRepository *repository.InterfaceLastStatusRepository) *MqttPublisher {
-	method := "NewMqttService"
-	log.Printf("[method:%v]🏗️ 🏗️ Building", method)
+func (MqttPublisher) New(mqttClient *MqttClient, interfaceLastStatusRepository *repository.InterfaceLastStatusRepository) *MqttPublisher {
 	service := MqttPublisher{
-		HubConfigService:              hubConfigService,
+		MqttClient:                    mqttClient,
 		InterfaceLastStatusRepository: interfaceLastStatusRepository,
-		Config:                        configs,
 	}
-	service.buildClient()
 	return &service
-}
-
-func (m *MqttPublisher) buildClient() {
-	//method := "buildClient"
-
-	brokerIp := m.HubConfigService.GetBrokerAddress()
-	o := MQTT.NewClientOptions()
-	o.AddBroker(fmt.Sprintf("tcp://%v:1883", brokerIp))
-	o.SetClientID(m.Config.Mqtt.ClientId)
-	o.SetUsername(m.Config.Mqtt.UserName)
-	if m.Config.Mqtt.PingTimeOut != "" {
-		x, _ := time.ParseDuration(m.Config.Mqtt.PingTimeOut)
-		o.SetPingTimeout(x)
-	}
-	if m.Config.Mqtt.KeepAlive != "" {
-		k, _ := time.ParseDuration(m.Config.Mqtt.KeepAlive)
-		o.SetKeepAlive(k)
-	}
-
-	m.Client = MQTT.NewClient(o)
-	if token := m.Client.Connect(); token.Wait() && token.Error() != nil {
-		panic(token.Error())
-	}
 }
 
 /*
@@ -73,14 +41,13 @@ Si el mensaje a enviar es igual al anterior, deberá cumplirse el intervalo de e
 func (m *MqttPublisher) SpacedPublishCommand(topic string, message interface{}) bool {
 	method := "SpacedPublishCommand"
 
-	if m.shouldSend(topic, message) == false {
+	if !m.shouldSend(topic, message) {
 		return false
 	}
 
 	messageJSON, _ := json.Marshal(message)
-	token := m.Client.Publish(topic, 0, false, messageJSON)
+	m.MqttClient.Publish(topic, messageJSON)
 	log.Printf("[method:%v][topic:%v] Command Published", method, topic)
-	token.Wait()
 
 	return true
 }
@@ -131,9 +98,12 @@ func (m *MqttPublisher) PublishCommand(topic string, message interface{}) bool {
 		log.Printf("[method:%v] %v", method, token.Error().Error())
 		return false
 	}*/
-	token := m.Client.Publish(topic, 0, false, messageJSON)
+	err := m.MqttClient.Publish(topic, messageJSON)
+	if err == nil {
+		log.Printf("[method:%v][topic:%v] error publishing command", method, topic)
+		return false
+	}
 	log.Printf("[method:%v][topic:%v] Command Published", method, topic)
-	token.Wait()
 
 	// TODO !!!! OJO con esto que sigue, porque se desconectaba el cliente y se desuscribía
 	// revisar si es necesario recheckear la conexión cada x tiempo......

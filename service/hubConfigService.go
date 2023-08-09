@@ -6,7 +6,7 @@ type HubConfigService struct {
 	HubConfigRepository *repository.HubConfigRepository
 }
 
-func NewHubConfigService(hubConfigRepository *repository.HubConfigRepository) *HubConfigService {
+func (HubConfigService) New(hubConfigRepository *repository.HubConfigRepository) *HubConfigService {
 	return &HubConfigService{
 		HubConfigRepository: hubConfigRepository,
 	}
