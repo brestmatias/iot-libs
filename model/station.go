@@ -64,6 +64,14 @@ type InterfaceLastStatus struct {
 	LastReport      primitive.DateTime `bson:"last_report" json:"last_report"`
 }
 
+type SensorLastStatus struct {
+	DocId         primitive.ObjectID `bson:"_id,omitempty" json:"_id,omitempty"`
+	StationID     string             `bson:"station_id" json:"station_id"`
+	SensorID      string             `bson:"interface_id" json:"interface_id"`
+	ReportedValue string             `bson:"reported_value" json:"reported_value"`
+	LastReport    primitive.DateTime `bson:"last_report" json:"last_report"`
+}
+
 type StationCommandBody struct {
 	Interface string `json:"interface,omitempty"`
 	Value     int    `json:"value,omitempty"`
