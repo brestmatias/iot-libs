@@ -74,6 +74,12 @@ type StationNewsBody struct {
 	Id         string                           `json:"id"`
 	Status     string                           `json:"status,omitempty"`
 	Interfaces []StationNewsInterfaceStatusBody `json:"interfaces,omitempty"`
+	Sensors    []StationNewsSensorStatusBody    `json:"sensors,omitempty"`
+}
+
+type StationNewsSensorStatusBody struct {
+	Id    string `json:"id"`
+	Value string `json:"value"`
 }
 
 type StationNewsInterfaceStatusBody struct {
@@ -84,5 +90,5 @@ type StationNewsInterfaceStatusBody struct {
 type InterfaceSummaryResponse struct {
 	StationID string `json:"station_id"`
 	StationInterface
-	Value 		int `json:"value"`
+	Value int `json:"value"`
 }
