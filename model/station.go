@@ -100,3 +100,11 @@ type InterfaceSummaryResponse struct {
 	StationInterface
 	Value int `json:"value"`
 }
+
+type SensorHistory struct {
+	DocId     primitive.ObjectID `bson:"_id,omitempty" json:"_id,omitempty"`
+	StationID string             `bson:"station_id" json:"station_id"`
+	SensorID  string             `bson:"sensor_id" json:"sensor_id"`
+	Value     string             `bson:"value" json:"value"`
+	Date      primitive.DateTime `bson:"date" json:"date"`
+}
