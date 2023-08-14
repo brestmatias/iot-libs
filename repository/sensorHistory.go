@@ -5,6 +5,7 @@ import (
 	"log"
 
 	"github.com/brestmatias/iot-libs/model"
+	"github.com/brestmatias/iot-libs/wrappers"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )
@@ -18,10 +19,10 @@ type sensorHistoryRepository struct {
 	Collection *mongo.Collection
 }
 
-func NewSensorHistoryRepository(mongodb *mongo.Database) SensorHistoryRepository {
+func NewSensorHistoryRepository(mongodb *wrappers.MongoClientWrapper) SensorHistoryRepository {
 	return &sensorHistoryRepository{
-		MongoDB:    mongodb,
-		Collection: mongodb.Collection("sensor_history"),
+		MongoDB:    mongodb.GetDatabase(),
+		Collection: mongodb.GetDatabase().Collection("sensor_history"),
 	}
 }
 

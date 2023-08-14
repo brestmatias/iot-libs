@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/brestmatias/iot-libs/model"
+	"github.com/brestmatias/iot-libs/wrappers"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -24,10 +25,10 @@ type sensorLastStatusRepository struct {
 	Collection *mongo.Collection
 }
 
-func NewSensorLastStatusRepository(mongodb *mongo.Database) SensorLastStatusRepository {
+func NewSensorLastStatusRepository(mongodb *wrappers.MongoClientWrapper) SensorLastStatusRepository {
 	return &sensorLastStatusRepository{
-		MongoDB:    mongodb,
-		Collection: mongodb.Collection("sensor_last_status"),
+		MongoDB:    mongodb.GetDatabase(),
+		Collection: mongodb.GetDatabase().Collection("sensor_last_status"),
 	}
 }
 

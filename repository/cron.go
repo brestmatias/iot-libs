@@ -7,6 +7,7 @@ import (
 	"log"
 
 	"github.com/brestmatias/iot-libs/model"
+	"github.com/brestmatias/iot-libs/wrappers"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 )
@@ -56,9 +57,10 @@ func (h *cronRepository) FindByField(field string, value interface{}) *[]model.C
 	return &result
 }
 
-func NewCronRepository(mongodb *mongo.Database) CronRepository {
+func NewCronRepository(mongodb *wrappers.MongoClientWrapper) CronRepository {
+
 	return &cronRepository{
-		MongoDB:    mongodb,
-		Collection: mongodb.Collection("cron_task"),
+		MongoDB:    mongodb.GetDatabase(),
+		Collection: mongodb.GetDatabase().Collection("cron_task"),
 	}
 }

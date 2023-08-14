@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/brestmatias/iot-libs/model"
+	"github.com/brestmatias/iot-libs/wrappers"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -88,7 +89,7 @@ func (h *hubConfigRepository) FindByField(field string, value interface{}) *[]mo
 	return &result
 }
 
-func NewHubConfigRepository(mongodb *mongo.Database) HubConfigRepository {
+func NewHubConfigRepository(mongodb *wrappers.MongoClientWrapper) HubConfigRepository {
 	hubConfigCollection := mongodb.Collection("hub_config")
 	return &hubConfigRepository{
 		MongoDB:    mongodb,

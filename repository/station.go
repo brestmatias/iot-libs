@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/brestmatias/iot-libs/model"
+	"github.com/brestmatias/iot-libs/wrappers"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -24,9 +25,9 @@ type stationRepository struct {
 	MongoDB *mongo.Database
 }
 
-func NewStationRepository(mongodb *mongo.Database) StationRepository {
+func NewStationRepository(mongodb *wrappers.MongoClientWrapper) StationRepository {
 	return &stationRepository{
-		MongoDB: mongodb,
+		MongoDB: mongodb.GetDatabase(),
 	}
 }
 

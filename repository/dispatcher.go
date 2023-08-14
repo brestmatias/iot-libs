@@ -7,6 +7,7 @@ import (
 	"log"
 
 	"github.com/brestmatias/iot-libs/model"
+	"github.com/brestmatias/iot-libs/wrappers"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 )
@@ -56,9 +57,9 @@ func (h *dispatcherRepository) FindByField(field string, value interface{}) *[]m
 	return &result
 }
 
-func NewDispatcherRepository(mongodb *mongo.Database) DispatcherRepository {
+func NewDispatcherRepository(mongodb *wrappers.MongoClientWrapper) DispatcherRepository {
 	return &dispatcherRepository{
-		MongoDB:    mongodb,
-		Collection: mongodb.Collection("dispatcher_task"),
+		MongoDB:    mongodb.GetDatabase(),
+		Collection: mongodb.GetDatabase().Collection("dispatcher_task"),
 	}
 }
