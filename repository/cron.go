@@ -58,7 +58,6 @@ func (h *cronRepository) FindByField(field string, value interface{}) *[]model.C
 }
 
 func NewCronRepository(mongodb *wrappers.MongoClientWrapper) CronRepository {
-
 	return &cronRepository{
 		MongoDB:    mongodb.GetDatabase(),
 		Collection: mongodb.GetDatabase().Collection("cron_task"),

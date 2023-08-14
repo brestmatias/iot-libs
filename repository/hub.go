@@ -90,9 +90,9 @@ func (h *hubConfigRepository) FindByField(field string, value interface{}) *[]mo
 }
 
 func NewHubConfigRepository(mongodb *wrappers.MongoClientWrapper) HubConfigRepository {
-	hubConfigCollection := mongodb.Collection("hub_config")
+	hubConfigCollection := mongodb.GetDatabase().Collection("hub_config")
 	return &hubConfigRepository{
-		MongoDB:    mongodb,
+		MongoDB:    mongodb.GetDatabase(),
 		Collection: hubConfigCollection,
 	}
 }
