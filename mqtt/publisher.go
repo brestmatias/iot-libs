@@ -5,18 +5,14 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/brestmatias/iot-libs/config"
-	"github.com/brestmatias/iot-libs/repository"
-
 	"log"
 	"time"
 )
 
 type MqttPublisher struct {
-	SentCommands                  []CommandHash
-	InterfaceLastStatusRepository *repository.InterfaceLastStatusRepository
-	MqttClient                    *MqttClient
-	Config                        *config.ConfigFile
+	SentCommands []CommandHash
+	MqttClient   *MqttClient
+	minInterval  time.Duration
 }
 
 type CommandHash struct {
@@ -25,10 +21,10 @@ type CommandHash struct {
 	LastSent time.Time
 }
 
-func (MqttPublisher) New(mqttClient *MqttClient, interfaceLastStatusRepository *repository.InterfaceLastStatusRepository) *MqttPublisher {
+func (MqttPublisher) New(mqttClient *MqttClient, minInterval time.Duration) *MqttPublisher {
 	service := MqttPublisher{
-		MqttClient:                    mqttClient,
-		InterfaceLastStatusRepository: interfaceLastStatusRepository,
+		MqttClient:  mqttClient,
+		minInterval: minInterval,
 	}
 	return &service
 }
@@ -56,7 +52,6 @@ func (m *MqttPublisher) shouldSend(topic string, message interface{}) bool {
 	h := sha256.New()
 	h.Write([]byte(fmt.Sprintf("%v", message)))
 	hash := fmt.Sprintf("%x", h.Sum(nil))
-	minInterval, _ := time.ParseDuration(m.Config.Mqtt.MinInterval)
 	if len(m.SentCommands) == 0 {
 		m.SentCommands = append(m.SentCommands, CommandHash{
 			Topic:    topic,
@@ -69,7 +64,7 @@ func (m *MqttPublisher) shouldSend(topic string, message interface{}) bool {
 	for i, command := range m.SentCommands {
 		if command.Topic == topic {
 			if command.LastHash == hash {
-				if diff := time.Now().Sub(command.LastSent); diff >= minInterval {
+				if diff := time.Now().Sub(command.LastSent); diff >= m.minInterval {
 					(&m.SentCommands[i]).LastSent = time.Now()
 					return true
 				} else {
