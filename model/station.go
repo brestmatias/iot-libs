@@ -47,12 +47,13 @@ type Station struct {
 }
 
 type StationInterface struct {
-	ID                 string `bson:"id" json:"id"`
-	Name               string `bson:"name" json:"name"`
-	Description        string `bson:"description" json:"description"`
-	Zone               string `bson:"zone" json:"zone"`
-	Icon               string `bson:"icon" json:"icon"`
-	DispatcherDisabled bool   `bson:"dispatcher_disabled" json:"dispatcher_disabled"`
+	ID          string `bson:"id" json:"id"`
+	Name        string `bson:"name" json:"name"`
+	Description string `bson:"description" json:"description"`
+	Zone        string `bson:"zone" json:"zone"`
+	Icon        string `bson:"icon" json:"icon"`
+	//si true entonces, el dispatcher no debe dispararse porque la salida es manejada por la estación
+	DispatcherDisabled bool `bson:"dispatcher_disabled" json:"dispatcher_disabled"`
 }
 
 type InterfaceLastStatus struct {
